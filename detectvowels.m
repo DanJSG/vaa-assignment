@@ -1,5 +1,5 @@
 
-[audio, Fs] = audioread("clips\brooklyn1.wav");
+[audio, Fs] = audioread("clips\ae.wav");
 
 % Number of channels in the audio
 nChannels = length(audio(1, :));
@@ -30,7 +30,7 @@ windowLength = 1024;
 window = hamming(windowLength);
 overlap = windowLength / 2;
 
-% Zero pad audio to match window length
+% Zero pad audio to match window and overlap length
 paddingLength = (overlap * ceil(nAudioSamples / overlap)) - nAudioSamples;
 audio(end:end + paddingLength) = 0;
 nAudioSamples = length(audio);
@@ -67,11 +67,13 @@ gaussianFiltered = filter(gaussianWindow, 1, firstOrderDifferential);
 
 gaussianFiltered(gaussianFiltered < 0) = 0;
 
-[vowelPeaks, vowelPositions] = findpeaks(gaussianFiltered, 'MinPeakDistance', peakDistance, 'MinPeakHeight', 0.2);
+[vowelPeaks, vowelPositions] = findpeaks(gaussianFiltered, ...
+    'MinPeakDistance', peakDistance, 'MinPeakHeight', 0.2);
 
 nVowels = length(vowelPositions);
 
 fftPoints = 4096;
+audio(end:end + fftPoints) = 0;
 frequencyIndex = linspace(1, Fs / 2, fftPoints / 2);
 vowelSpectrums = zeros(nVowels, fftPoints);
 
@@ -88,7 +90,7 @@ for n=1:nVowels
     frame = audio(startPosition:endPosition) .* window;
     frameSpectrum = abs(fft(frame, fftPoints));
     
-    lowFrequencyRemovalIndex = ceil(80 / ((Fs / 2) / (fftPoints / 2)));
+    lowFrequencyRemovalIndex = ceil(200 / ((Fs / 2) / (fftPoints / 2)));
     frameSpectrum(1:lowFrequencyRemovalIndex) = 0;
     
     [maxPeak, maxPeakLocation] = max(frameSpectrum(1:fftPoints / 2));
@@ -106,14 +108,45 @@ end
 vowelSpectrums = vowelSpectrums(1:nConfirmedVowels, :);
 confirmedVowelPositions = confirmedVowelPositions(1:nConfirmedVowels);
 confirmedVowelPeaks = confirmedVowelPeaks(1:nConfirmedVowels);
+confirmedVowelPositionSamples = confirmedVowelPositions * overlap;
 
-vowelFormants = zeros(nConfirmedVowels, 5);
+vowelFormants = zeros(nConfirmedVowels, 2);
 for n=1:nConfirmedVowels
-    [peaks, peakLocs] = findpeaks(vowelSpectrums(n, 1:fftPoints / 2), 'SortStr', 'descend', 'NPeaks', 5);
+    currentSpectrum = vowelSpectrums(n, 1:fftPoints / 2);
+    
+    % Minimum number of samples between F1 and F2
+    minDifferenceSamples = ceil(200 / ((Fs / 2) / (fftPoints / 2)));
+    
+    % Sample points for max and min formant frequencies
+    lowestF1 = ceil(200 / ((Fs / 2) / (fftPoints / 2)));
+    highestF1 = ceil(1000 / ((Fs / 2) / (fftPoints / 2)));
+    lowestF2 = ceil(550 / ((Fs / 2) / (fftPoints / 2)));
+    highestF2 = ceil(2700 / ((Fs / 2) / (fftPoints / 2)));
+    
+    % 1st formant search spectrum
+    f1Spectrum = vowelSpectrums(n, 1:fftPoints / 2);
+    f1Spectrum(1:lowestF1) = 0;
+    f1Spectrum(highestF1:end) = 0;
+    
+    [f1Peak, f1Location] = findpeaks(f1Spectrum, 'SortStr', 'descend', 'NPeaks', 1);
+    
+    % 2nd formant search spectrum
+    f2Spectrum = vowelSpectrums(n, 1:fftPoints / 2);
+    f2Spectrum(1:max([lowestF2, f1Location + minDifferenceSamples])) = 0;
+    f2Spectrum(highestF2:end) = 0;
+%     f2Spectrum(f1Location) = 0;
+    
+    [f2Peak, f2Location] = findpeaks(f2Spectrum, 'SortStr', 'descend', 'NPeaks', 1);
+    
+    vowelFormants(n, 1) = frequencyIndex(f1Location);
+    vowelFormants(n, 2) = frequencyIndex(f2Location);
+    
+%     [peaks, peakLocs] = findpeaks(vowelSpectrums(n, 1:fftPoints / 2), 'SortStr', 'descend', 'NPeaks', 4);
 %     sampleIndices = peakLocs * overlap;
-    vowelFormants(n, :) = frequencyIndex(peakLocs);
-    vowelFormants(n, :) = sort(vowelFormants(n, :));
+%     vowelFormants(n, :) = frequencyIndex(peakLocs);
+%     vowelFormants(n, :) = sort(vowelFormants(n, :));
 end
+
 
 
 
@@ -126,7 +159,6 @@ plot(confirmedVowelPositions, confirmedVowelPeaks, 'x', 'Color', 'black', 'LineW
 legend(["Sums", "Smoothed Derivative", "Peaks"]);
 hold off;
 
-confirmedVowelPositionSamples = confirmedVowelPositions * overlap;
 
 figure(2);
 plot(audio);
@@ -136,15 +168,21 @@ for n=1:nConfirmedVowels
 end
 hold off;
 
-% figure(3);
-% semilogx(frequencyIndex, vowelSpectrums(1, 1:end / 2));    
-% hold on;
+% for n=1:nConfirmedVowels
+%     figure(2 + n);
+%     semilogx(frequencyIndex, vowelSpectrums(n, 1:end / 2));    
+% end
+% hold off;
 
+figure(2 + nConfirmedVowels + 1);
+hold on;
 for n=1:nConfirmedVowels
-    figure(2 + n);
-    semilogx(frequencyIndex, vowelSpectrums(n, 1:end / 2));    
+    plot(vowelFormants(n, 1), vowelFormants(n, 2), 'x');
 end
 hold off;
-% semilogx(vowelSpectrums(5, 1:end / 2));
 
-% [peaks, locs] = findpeaks(vowelSpectrums(1, 1:end / 2), 'SortStr', );
+% ax = gca;               % get current axis and assign it the label “ax”
+% ax.XDir = 'reverse';    % change X direction
+% ax.YDir = 'reverse';    % change Y direction
+
+
