@@ -5,17 +5,21 @@ function[vowelSpectrums, vowelPositions, vowelPeaks, ...
     overlap = windowLength / 2;
     window = hamming(windowLength);
 
-    minPeakDistance = min([(150e-3 * Fs) / windowLength, 99]);
+    minPeakDistance = min([(200e-3 * Fs) / windowLength, 99]);
 
     [approxVowelPeaks, approxVowelPositions] = ...
         findpeaks(filteredDifferential, 'MinPeakDistance', minPeakDistance, ...
         'MinPeakHeight', 5);
-
+    
+    disp(approxVowelPositions);
+    
+    approxVowelPositions = approxVowelPositions;
+    
+    disp(approxVowelPositions);
+    
     nVowels = length(approxVowelPositions);
 
-%     fftPoints = 4096;
     audio(end:end + fftPoints) = 0;
-%     frequencyIndex = linspace(1, Fs / 2, fftPoints / 2);
     vowelSpectrums = zeros(nVowels, fftPoints);
 
     vowelPositions = zeros(nVowels, 1);
@@ -27,7 +31,11 @@ function[vowelSpectrums, vowelPositions, vowelPeaks, ...
     for n=1:nVowels
         startPosition = vowelPositionSamples(n);
         endPosition = startPosition + windowLength - 1;
-
+    
+        if endPosition > length(audio)
+            audio(startPosition + windowLength - 1:endPosition + 1) = 0;
+        end
+        
         frame = audio(startPosition:endPosition) .* window;
         frameSpectrum = abs(fft(frame, fftPoints));
 
