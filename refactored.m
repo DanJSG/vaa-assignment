@@ -1,4 +1,4 @@
-[audio, Fs] = audioread("clips\london1.wav");
+[audio, Fs] = audioread("clips\scottish1.wav");
 
 windowLength = 1024;
 fftPoints = 4096;
@@ -26,7 +26,13 @@ vowels = estimatevowels(vowelFormants);
 
 % sound(audio, Fs);
 
-
+for n=1:length(vowels)
+    
+    sound(audio(vowelPositionSamples(n):vowelPositionSamples(n) + 4096), Fs)
+    pause(0.5);
+    
+%     vowelPositionSamples(n);
+end
 
 
 
@@ -59,3 +65,4 @@ for n=1:length(vowelPositions)
     plot(vowelFormants(n, 1), vowelFormants(n, 2), 'x');
 end
 hold off;
+

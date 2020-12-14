@@ -107,26 +107,26 @@ function[vowels] = estimatevowels(vowelFormants)
 % 
 %     end
 
-    for n=1:nVowels
-
-        currentVowel = vowelFormants(n, :);
-
-        distanceToAverage = 10e6;
-        closestVowelIndex = 0;
-
-        for m=1:nVowelZones
-           vowelAverage = vowelAverages(m, :);
-           distance = ...
-               sqrt( (vowelAverage(1) - currentVowel(1))^2 + (vowelAverage(2) - currentVowel(2))^2);
-           if distance < distanceToAverage
-              distanceToAverage = distance;
-              closestVowelIndex = m;
-           end
-        end
-
-        actualVowels(n) = closestVowelIndex;
-
+for n=1:nVowels
+   
+    currentVowel = vowelFormants(n, :);
+    
+    distanceToAverage = 10e6;
+    closestVowelIndex = 0;
+    
+    for m=1:nVowelZones
+       vowelAverage = vowelAverages(m, :);
+       distance = ...
+           sqrt( (vowelAverage(1) - currentVowel(1))^2 + (vowelAverage(2) - currentVowel(2))^2);
+       if distance < distanceToAverage
+          distanceToAverage = distance;
+          closestVowelIndex = m;
+       end
     end
+    
+    actualVowels(n) = closestVowelIndex;
+    
+end
     
 %     disp(actualVowels);
     vowels = vowelSymbol(actualVowels)';
