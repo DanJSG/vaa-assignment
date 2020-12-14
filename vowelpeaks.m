@@ -8,7 +8,8 @@ function[vowelSpectrums, vowelPositions, vowelPeaks, ...
     minPeakDistance = min([(150e-3 * Fs) / windowLength, 99]);
 
     [approxVowelPeaks, approxVowelPositions] = ...
-        findpeaks(filteredDifferential, 'MinPeakDistance', minPeakDistance);
+        findpeaks(filteredDifferential, 'MinPeakDistance', minPeakDistance, ...
+        'MinPeakHeight', 5);
 
     nVowels = length(approxVowelPositions);
 
@@ -34,7 +35,7 @@ function[vowelSpectrums, vowelPositions, vowelPeaks, ...
         frameSpectrum(1:lowFrequencyRemovalIndex) = 0;
 
         [~, maxPeakLocation] = max(frameSpectrum(1:fftPoints / 2));
-        highestFirstFormant = ceil(1400 / ((Fs / 2) / (fftPoints / 2)));
+        highestFirstFormant = ceil(1500 / ((Fs / 2) / (fftPoints / 2)));
 
         if maxPeakLocation < highestFirstFormant
             nConfirmedVowels = nConfirmedVowels + 1;

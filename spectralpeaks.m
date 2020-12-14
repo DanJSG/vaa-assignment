@@ -28,7 +28,7 @@ function[spectralPeaksSignal] = spectralpeaks(audio, windowLength)
 
         % Calculate the top 10 spectral 
         [spectralPeakValues, ~] = ...
-            findpeaks(frameSpectrum, 'SortStr', 'descend', 'NPeaks', 10);
+            findpeaks(frameSpectrum, 'SortStr', 'descend', 'NPeaks', 10, 'MinPeakHeight', 10);
 
         spectralPeaksSignal(n) = sum(spectralPeakValues);
 

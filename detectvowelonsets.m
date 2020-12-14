@@ -1,5 +1,5 @@
 
-[audio, Fs] = audioread("clips\ae.wav");
+[audio, Fs] = audioread("clips\london1.wav");
 
 % Number of channels in the audio
 nChannels = length(audio(1, :));
@@ -51,7 +51,7 @@ for n=1:(nAudioSamples / overlap) - 1
     
     % Calculate the top 10 spectral 
     [spectralPeakValues, spectralPeakLocations] = ...
-        findpeaks(frameSpectrum, 'SortStr', 'descend', 'NPeaks', 10);
+        findpeaks(frameSpectrum, 'SortStr', 'descend', 'NPeaks', 10, 'MinPeakHeight', 10);
     
     spectralSums(n) = sum(spectralPeakValues);
     
@@ -96,15 +96,20 @@ for n=1:nVowels
     frameSpectrum(1:lowFrequencyRemovalIndex) = 0;
     
     [maxPeak, maxPeakLocation] = max(frameSpectrum(1:fftPoints / 2));
-    highestFirstFormant = ceil(1400 / ((Fs / 2) / (fftPoints / 2)));
-    
+    highestFirstFormant = ceil(1500 / ((Fs / 2) / (fftPoints / 2)));
+
     if maxPeakLocation < highestFirstFormant
         nConfirmedVowels = nConfirmedVowels + 1;
         confirmedVowelPositions(nConfirmedVowels) = vowelPositions(n);
         confirmedVowelPeaks(nConfirmedVowels) = vowelPeaks(n);
         vowelSpectrums(nConfirmedVowels, :) = frameSpectrum;
+        continue;
     end
     
+    disp(maxPeakLocation);
+    figure(10 + n);
+    semilogx(frameSpectrum(1:end / 2));
+       
 end
 
 vowelSpectrums = vowelSpectrums(1:nConfirmedVowels, :);

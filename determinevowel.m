@@ -1,6 +1,8 @@
 clear;
 clc;
 
+% vowelFormants = [205.656082071324,1282.79335613092;205.656082071324,2112.18905715681;938.109428431852,1207.39374694675;582.654127992184,873.481191988276];
+
 vowelFormants = [
     [205, 2564]         % /i/
     [233, 598]          % /u/
@@ -35,51 +37,98 @@ vowelAverages = [
 
 nVowelZones = length(vowelZones);
 
-labeledVowelFormants = zeros(nVowels, nVowelZones + 1);
-% labeledVowelFormants(:, 1:2) = vowelFormants;
-for n=1:nVowels
-    currentVowel = vowelFormants(n, :);
-    nPossibleVowels = 0;
-    possibleVowels = zeros(nVowelZones, 1);
-    for m=1:nVowelZones
-        if currentVowel(1) > vowelZones(m, 1) && ...
-                currentVowel(1) < vowelZones(m, 2) && ...
-                currentVowel(2) > vowelZones(m, 3) && ...
-                currentVowel(2) < vowelZones(m, 4)
-            nPossibleVowels = nPossibleVowels + 1;
-            possibleVowels(nPossibleVowels) = m;
-        end   
-    end
-    labeledVowelFormants(n, 1) = nPossibleVowels;
-    labeledVowelFormants(n, 2:end) = possibleVowels;
-end
+% labeledVowelFormants = zeros(nVowels, nVowelZones + 1);
+% % labeledVowelFormants(:, 1:2) = vowelFormants;
+% for n=1:nVowels
+%     currentVowel = vowelFormants(n, :);
+%     nPossibleVowels = 0;
+%     possibleVowels = zeros(nVowelZones, 1);
+%     for m=1:nVowelZones
+%         if currentVowel(1) > vowelZones(m, 1) && ...
+%                 currentVowel(1) < vowelZones(m, 2) && ...
+%                 currentVowel(2) > vowelZones(m, 3) && ...
+%                 currentVowel(2) < vowelZones(m, 4)
+%             nPossibleVowels = nPossibleVowels + 1;
+%             possibleVowels(nPossibleVowels) = m;
+%         end   
+%     end
+%     labeledVowelFormants(n, 1) = nPossibleVowels;
+%     labeledVowelFormants(n, 2:end) = possibleVowels;
+% end
 
 actualVowels = zeros(nVowels, 1);
+% for n=1:nVowels
+%     currentVowel = vowelFormants(n, :);
+%     currentLabeledVowel = labeledVowelFormants(n, :);
+%     nPossibleVowels = currentLabeledVowel(1);
+%     if nPossibleVowels < 2
+%         actualVowels(n) = currentLabeledVowel(2);
+%         continue;
+%     end
+%     
+%     % Start with a very large number that the actual distance will always 
+%     % be smaller than and an invalid index
+%     distanceToAverage = 10e6;
+%     closestVowelIndex = 0;
+%     for m=1:nPossibleVowels
+%         possibleVowelIndex = currentLabeledVowel(m);
+%         vowelAverage = vowelAverages(possibleVowelIndex, :);
+%         distance = ... 
+%             sqrt( (vowelAverage(1) - currentVowel(1))^2 + (vowelAverage(2) - currentVowel(2))^2 );
+%         if distance < distanceToAverage
+%             distanceToAverage = distance;
+%             closestVowelIndex = possibleVowelIndex;
+%         end
+%     end
+%     
+%     actualVowels(n) = closestVowelIndex;
+%     
+% end
+% 
+% % Final catch for any formants which don't appear to fall within the
+% % defined range
+% for n=1:nVowels
+%     if actualVowels(n) ~= 0
+%         continue
+%     end
+%     
+%     distanceToAverage = 10e6;
+%     closestVowelIndex = 0;
+%     for m=1:nVowels
+%         possibleVowelIndex = labeledVowelFormants(n, m);
+%         vowelAverage = vowelAverages(possibleVowelIndex, :);
+%         distance = ... 
+%             sqrt( (vowelAverage(1) - currentVowel(1))^2 + (vowelAverage(2) - currentVowel(2))^2 );
+%         if distance < distanceToAverage
+%             distanceToAverage = distance;
+%             closestVowelIndex = possibleVowelIndex;
+%         end
+%     end
+%     
+%     disp("Catch all vowel index: " + closestVowelIndex);
+%     actualVowels(n) = closestVowelIndex;
+%     
+% end
+
 for n=1:nVowels
+   
     currentVowel = vowelFormants(n, :);
-    currentLabeledVowel = labeledVowelFormants(n, :);
-    nPossibleVowels = currentLabeledVowel(1);
-    if nPossibleVowels < 2
-        actualVowels(n) = currentLabeledVowel(2);
-        continue;
-    end
     
-    % Start with a very large number that the actual distance will always 
-    % be smaller than and an invalid index
     distanceToAverage = 10e6;
     closestVowelIndex = 0;
-    for m=1:nPossibleVowels
-        possibleVowelIndex = currentLabeledVowel(m);
-        vowelAverage = vowelAverages(possibleVowelIndex, :);
-        distance = ... 
-            sqrt( (vowelAverage(1) - currentVowel(1))^2 + (vowelAverage(2) - currentVowel(2))^2 );
-        if distance < distanceToAverage
-            distanceToAverage = distance;
-            closestVowelIndex = possibleVowelIndex;
-        end
+    
+    for m=1:nVowelZones
+       vowelAverage = vowelAverages(m, :);
+       distance = ...
+           sqrt( (vowelAverage(1) - currentVowel(1))^2 + (vowelAverage(2) - currentVowel(2))^2);
+       if distance < distanceToAverage
+          distanceToAverage = distance;
+          closestVowelIndex = m;
+       end
     end
     
     actualVowels(n) = closestVowelIndex;
     
 end
 
+vowels = vowelSymbol(actualVowels)';

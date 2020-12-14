@@ -54,11 +54,13 @@ for n=1:nVowels
     labeledVowelFormants(n, 2:end) = possibleVowels;
 end
 
+actualVowels = zeros(nVowels, 1);
 for n=1:nVowels
     currentVowel = vowelFormants(n, :);
     currentLabeledVowel = labeledVowelFormants(n, :);
     nPossibleVowels = currentLabeledVowel(1);
     if nPossibleVowels < 2
+        actualVowels(n) = currentLabeledVowel(2);
         continue;
     end
     
@@ -71,10 +73,20 @@ for n=1:nVowels
         vowelAverage = vowelAverages(possibleVowelIndex, :);
         distance = ... 
             sqrt( (vowelAverage(1) - currentVowel(1))^2 + (vowelAverage(2) - currentVowel(2))^2 );
-        if distance > 
+        if distance < distanceToAverage
+            distanceToAverage = distance;
+            closestVowelIndex = possibleVowelIndex;
+        end
     end
     
-    disp(nPossibleVowels);
+    actualVowels(n) = closestVowelIndex;
+    
+end
+
+vowels = zeros(nVowels, 1);
+vowels = vowelSymbol(
+
+for n=1:nVowels
     
 end
 

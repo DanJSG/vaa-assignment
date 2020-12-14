@@ -1,9 +1,10 @@
-[audio, Fs] = audioread("clips\ae.wav");
+[audio, Fs] = audioread("clips\london1.wav");
 
 windowLength = 1024;
 fftPoints = 4096;
 
 audio = monoconvert(audio);
+audio = normalize(audio, 'range', [-1, 1]);
 audio = dualfade(audio, Fs, 5e-3);
 
 spectralPeaksSignal = spectralpeaks(audio, windowLength);
@@ -20,6 +21,20 @@ gaussianFiltered(gaussianFiltered < 0) = 0;
     vowelPositionSamples] = vowelpeaks(gaussianFiltered, audio, Fs, fftPoints, windowLength);
 
 vowelFormants = vowelformants(vowelSpectrums, fftPoints, Fs);
+
+vowels = estimatevowels(vowelFormants);
+
+% sound(audio, Fs);
+
+
+
+
+
+
+
+
+
+
 
 hold off;
 figure(1);
