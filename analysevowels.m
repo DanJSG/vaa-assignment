@@ -1,7 +1,7 @@
 clear;
 clc;
 
-[audio, Fs] = audioread("clips\london1.wav");
+[audio, Fs] = audioread("clips\brooklyn2.wav");
 
 windowLength = 1024;
 fftPoints = 4096;

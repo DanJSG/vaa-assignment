@@ -26,10 +26,11 @@ function[spectralPeaksSignal] = spectralpeaks(audio, windowLength)
         % Take the FFT and get the frequency spectrum of the frame
         frameSpectrum = abs(fft(frame, windowLength));
 
-        % Calculate the top 10 spectral 
+        % Calculate the highest 10 spectral peaks
         [spectralPeakValues, ~] = ...
             findpeaks(frameSpectrum, 'SortStr', 'descend', 'NPeaks', 10, 'MinPeakHeight', 10);
-
+        
+        % Sum the spectral peaks for the current sample
         spectralPeaksSignal(n) = sum(spectralPeakValues);
 
     end
