@@ -1,38 +1,45 @@
-function[vowelFormants] = vowelformants(spectrums, fftPoints, Fs)
+%VOWELFORMANTS Function for estimating the vowel formants of a signal.
+% Takes an audio signal and a set of vowel onset points and estimates the
+% first two formatns in the vowels using the LPC spectrum and peak picking.
+% Input arguments:
+%   audio - input audio signal
+%   Fs - sampling frequency of the audio signal
+%   vowelPositions - locations of the Vowel Onset Points (VOPs)
+%   windowLength - the length of the window in samples
+%   nFft - the number of samples to use in the FFT
+function[vowelFormants] = vowelformants(audio, Fs, vowelPositions, windowLength, nFft)
     
-    nConfirmedVowels = length(spectrums(:, 1));
-    disp(nConfirmedVowels);
-    frequencyIndex = linspace(1, Fs / 2, fftPoints / 2);
+    % Pre-define matrix for the vowel formants
+    vowelFormants = zeros(length(vowelPositions), 2);
     
-    vowelFormants = zeros(nConfirmedVowels, 2);
-    for n=1:nConfirmedVowels
-%         currentSpectrum = vowelSpectrums(n, 1:fftPoints / 2);
-
-        % Minimum number of samples between F1 and F2
-        minDifferenceSamples = ceil(200 / ((Fs / 2) / (fftPoints / 2)));
-
-        % Sample points for max and min formant frequencies
-        lowestF1 = ceil(200 / ((Fs / 2) / (fftPoints / 2)));
-        highestF1 = ceil(1000 / ((Fs / 2) / (fftPoints / 2)));
-        lowestF2 = ceil(550 / ((Fs / 2) / (fftPoints / 2)));
-        highestF2 = ceil(2700 / ((Fs / 2) / (fftPoints / 2)));
-
-        % 1st formant search spectrum
-        f1Spectrum = spectrums(n, 1:fftPoints / 2);
-        f1Spectrum(1:lowestF1) = 0;
-        f1Spectrum(highestF1:end) = 0;
-
-        [~, f1Location] = findpeaks(f1Spectrum, 'SortStr', 'descend', 'NPeaks', 1);
-
-        % 2nd formant search spectrum
-        f2Spectrum = spectrums(n, 1:fftPoints / 2);
-        f2Spectrum(1:max([lowestF2, f1Location + minDifferenceSamples])) = 0;
-        f2Spectrum(highestF2:end) = 0;
-
-        [~, f2Location] = findpeaks(f2Spectrum, 'SortStr', 'descend', 'NPeaks', 1);
-
-        vowelFormants(n, 1) = frequencyIndex(f1Location);
-        vowelFormants(n, 2) = frequencyIndex(f2Location);
+    % Loop through each VOP
+    for n=1:length(vowelPositions)
+        
+        % Extract a frame of audio
+        frame = audio(vowelPositions(n):vowelPositions(n) + windowLength - 1);
+        
+        % Calculate the LPC coefficients for that frame of audio
+        lpcCoeffs = lpc(frame, 50);
+        
+        % Get the filter frequency and phase response of the LPC coefficients
+        [lpcSpectrum, lpcFDomain] = freqz(1, lpcCoeffs, nFft, Fs);
+        
+        % Take the absolute value of the filter frequency response and crop
+        % out the reflected section of the spectrum
+        lpcSpectrum = abs(lpcSpectrum(1:nFft / 2));
+        lpcFDomain = lpcFDomain(1:nFft / 2);
+        
+        % Find the top 3 peaks within this signal
+        [~, formantPositions] = findpeaks(lpcSpectrum, 'NPeaks', 3);
+        
+        % Sort these peaks to be in order
+        formantPositions = sort(formantPositions);
+        
+        % Convert peak locations to frequency
+        formantFreqs = lpcFDomain(formantPositions);
+        
+        % Save the first two vowel formants for output
+        vowelFormants(n, :) = formantFreqs(1:2);
 
     end
 
